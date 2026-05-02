@@ -1,5 +1,6 @@
 # coding-standards-repo
 I took this from nasa guidelines for myself , I find this very cool
+
 The 10 Coding Rules for Safety-Critical Systems
 Restrict Control Flow (4:52): Avoid goto, setjump, longjump, and all forms of recursion to ensure an acyclic call graph that is easier to verify.
 Fixed Upper Bound Loops (9:19): Every loop must have a statically provable upper bound to prevent infinite or runaway execution.
