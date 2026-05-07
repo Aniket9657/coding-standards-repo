@@ -1,18 +1,400 @@
-# coding-standards-repo
-I took this from nasa guidelines for myself , I find this very cool
+# Coding Standards Repository
 
-The 10 Coding Rules for Safety-Critical Systems
-Restrict Control Flow (4:52): Avoid goto, setjump, longjump, and all forms of recursion to ensure an acyclic call graph that is easier to verify.
-Fixed Upper Bound Loops (9:19): Every loop must have a statically provable upper bound to prevent infinite or runaway execution.
-No Dynamic Memory Allocation (10:37): Avoid malloc and similar functions after initialization to eliminate unpredictable memory behavior and potential leaks.
-Function Length Limits (14:06): Functions should be limited to about 60 lines, fitting on a single sheet of paper to ensure clarity and logical unit structure.
-Assertion Density (15:49): Use at least two assertions per function to catch anomalous conditions early.
-Scope Limitation (19:28): Declare data objects at the smallest possible scope to improve fault diagnosis.
-Return Value Checking (21:10): Force explicit handling or explicit ignoring (via casting to void) of return values from non-void functions.
-Limited Preprocessor Use (24:29): Strictly limit the preprocessor to header inclusion and simple macros, avoiding complex token pasting or conditional compilation.
-Restricted Pointers (29:53): Limit to one level of pointer dereferencing and forbid function pointers to keep data flow predictable.
-Mandatory Compilation and Analysis (30:13): Code must be compiled daily with strict warnings enabled and must pass daily checks by static analysis tools with zero warnings.
-Key Takeaways
-Automation Over Opinion: The video highlights how these rules favor tools that can mechanically verify code rather than human-subjective style guides.
-Practicality: While initially appearing "Draconian," these rules are compared to wearing seatbelts—uncomfortable at first, but essential for safety in critical systems where a failure could lead to catastrophic results.
-Code Quality: The Primeagen expresses great appreciation for the coherence and pragmatism of the document, noting that while he doesn't personally follow every rule, the philosophy of rigorous, analyzable code is a masterclass in engineering
+## Philosophy
+
+These standards are inspired by the coding rules used in safety-critical systems engineering at NASA.
+The goal is not stylistic perfection — it is **predictability, analyzability, maintainability, and fault prevention**.
+
+The core idea is simple:
+
+> Code should be easy for humans to reason about and easy for tools to verify.
+
+These rules intentionally favor:
+
+* deterministic behavior
+* explicit control flow
+* bounded execution
+* small logical units
+* aggressive validation
+* mechanical verification over subjective preference
+
+Some rules may initially feel restrictive, but the tradeoff is improved reliability, debuggability, and long-term maintainability.
+
+---
+
+# Core Coding Standards
+
+## 1. Restrict Control Flow
+
+Avoid:
+
+* `goto`
+* `setjmp`
+* `longjmp`
+* recursion
+
+### Standard
+
+Control flow should remain simple, explicit, and statically analyzable.
+
+### Why
+
+Acyclic call graphs are easier to:
+
+* verify
+* debug
+* reason about
+* analyze with static tooling
+
+### Preferred
+
+* iterative logic
+* explicit state machines
+* structured branching
+
+---
+
+## 2. Every Loop Must Have a Fixed Upper Bound
+
+### Standard
+
+All loops must have a provable maximum iteration count.
+
+### Why
+
+Prevents:
+
+* infinite loops
+* runaway execution
+* unbounded resource consumption
+
+### Preferred
+
+```c
+for (int i = 0; i < MAX_RETRIES; i++)
+```
+
+### Avoid
+
+```c
+while (true)
+```
+
+unless termination is formally guaranteed and documented.
+
+---
+
+## 3. No Dynamic Memory Allocation After Initialization
+
+Avoid:
+
+* `malloc`
+* `calloc`
+* `realloc`
+* runtime heap allocation
+
+### Standard
+
+Memory should be allocated during startup/initialization only.
+
+### Why
+
+Eliminates:
+
+* fragmentation
+* leaks
+* nondeterministic allocation failures
+* unpredictable latency
+
+### Preferred
+
+* stack allocation
+* static allocation
+* object pools
+* fixed-size buffers
+
+---
+
+## 4. Keep Functions Small
+
+### Standard
+
+Functions should fit on a single screen/page (~60 lines maximum).
+
+### Why
+
+Small functions:
+
+* reduce cognitive load
+* improve readability
+* isolate responsibility
+* simplify testing
+
+### Preferred
+
+Each function should represent:
+
+* one logical task
+* one level of abstraction
+
+---
+
+## 5. Use Assertions Aggressively
+
+### Standard
+
+Every function should contain meaningful assertions validating assumptions and invariants.
+
+### Why
+
+Assertions:
+
+* catch invalid states early
+* expose contract violations
+* improve debugging
+* document intent
+
+### Preferred
+
+```c
+assert(ptr != NULL);
+assert(length < BUFFER_SIZE);
+```
+
+---
+
+## 6. Minimize Variable Scope
+
+### Standard
+
+Declare variables in the narrowest possible scope.
+
+### Why
+
+Smaller scope:
+
+* reduces accidental coupling
+* improves readability
+* simplifies fault isolation
+* minimizes unintended mutation
+
+### Preferred
+
+```c
+for (int i = 0; i < size; i++)
+```
+
+instead of:
+
+```c
+int i;
+```
+
+declared far earlier than necessary.
+
+---
+
+## 7. Never Ignore Return Values Implicitly
+
+### Standard
+
+Every non-void return value must be:
+
+* checked
+* propagated
+* explicitly ignored
+
+### Preferred
+
+```c
+result = write_data();
+if (result != SUCCESS)
+```
+
+or explicitly:
+
+```c
+(void)write_data();
+```
+
+### Why
+
+Silent failure handling is one of the most common sources of production defects.
+
+---
+
+## 8. Limit Preprocessor Usage
+
+### Standard
+
+Use the preprocessor only for:
+
+* header inclusion
+* simple constants
+* minimal macros
+
+### Avoid
+
+* complex macros
+* token pasting
+* macro metaprogramming
+* deep conditional compilation
+
+### Why
+
+Heavy preprocessor logic:
+
+* obscures intent
+* complicates tooling
+* breaks debuggability
+* reduces readability
+
+---
+
+## 9. Restrict Pointer Complexity
+
+### Standard
+
+Limit pointer indirection to one level whenever possible.
+
+Avoid:
+
+* multi-level pointer chains
+* function pointers unless unavoidable
+
+### Why
+
+Complex pointer structures:
+
+* increase cognitive load
+* complicate data flow analysis
+* increase risk of undefined behavior
+
+### Preferred
+
+Simple, explicit ownership and access patterns.
+
+---
+
+## 10. Mandatory Compilation and Static Analysis
+
+### Standard
+
+Code must:
+
+* compile with all warnings enabled
+* produce zero warnings
+* pass static analysis checks continuously
+
+### Why
+
+Warnings are defects waiting to happen.
+
+### Recommended
+
+* daily builds
+* CI enforcement
+* automated linting
+* static analyzers
+* sanitizers
+
+---
+
+# Engineering Principles
+
+## Automation Over Opinion
+
+Prefer rules that can be:
+
+* enforced mechanically
+* verified automatically
+* checked consistently
+
+Avoid subjective standards that depend entirely on reviewer interpretation.
+
+---
+
+## Predictability Over Cleverness
+
+Readable and boring code is preferable to:
+
+* clever abstractions
+* hidden behavior
+* implicit control flow
+* magic metaprogramming
+
+---
+
+## Explicitness Over Convenience
+
+Prefer:
+
+* explicit ownership
+* explicit errors
+* explicit state transitions
+* explicit lifetimes
+
+Hidden behavior increases failure risk.
+
+---
+
+## Safety Over Brevity
+
+Shorter code is not always better.
+
+Correct, analyzable, maintainable code takes priority over terseness.
+
+---
+
+# Practical Interpretation
+
+These standards are intentionally strict.
+
+Not every project requires this level of rigor, but the philosophy scales extremely well to:
+
+* embedded systems
+* backend infrastructure
+* distributed systems
+* finance
+* medical software
+* aerospace
+* high-reliability systems
+
+Even partial adoption significantly improves code quality.
+
+---
+
+# Recommended Team Rules
+
+## Build Rules
+
+* Warnings treated as errors
+* Mandatory formatting
+* Mandatory linting
+* CI required for merge
+
+## Review Rules
+
+* No hidden side effects
+* No unnecessary abstraction
+* No unexplained complexity
+* Every unsafe operation documented
+
+## Reliability Rules
+
+* Fail fast
+* Validate assumptions
+* Prefer immutable data
+* Prefer deterministic behavior
+
+---
+
+# Summary
+
+The purpose of these standards is simple:
+
+> Write code that is easy to reason about, easy to verify, and difficult to misuse.
+
+Good engineering is not about writing the smartest code.
+
+It is about building systems that continue working correctly under pressure, failure, maintenance, and scale.
